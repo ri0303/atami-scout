@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>熱海物件スカウトレポート 2026-05-27</title>
+  <style>
+    :root {
+      --primary: #1a5276;
+      --accent:  #2e86c1;
+      --ok:      #1e8449;
+      --warn:    #d35400;
+      --bad:     #922b21;
+      --bg:      #f4f6f9;
+      --card:    #ffffff;
+      --border:  #d5d8dc;
+      --text:    #212121;
+      --muted:   #6c757d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 24px 16px 60px;
+    }
+    .container { max-width: 960px; margin: 0 auto; }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      color: #fff;
+      border-radius: 12px;
+      padding: 32px 28px 24px;
+      margin-bottom: 28px;
+    }
+    header h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: .02em; }
+    header p  { font-size: .9rem; opacity: .85; margin-top: 6px; }
+
+    /* Summary cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .summary-card {
+      background: var(--card);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 18px 16px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,.06);
+    }
+    .summary-card .num { font-size: 2rem; font-weight: 700; color: var(--accent); }
+    .summary-card .label { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+
+    /* Section headers */
+    h2 {
+      font-size: 1.2rem;
+      color: var(--primary);
+      border-left: 4px solid var(--accent);
+      padding-left: 12px;
+      margin: 32px 0 16px;
+    }
+    h3 { font-size: 1.05rem; color: var(--primary); margin-bottom: 10px; }
+
+    /* Property cards */
+    .property-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 22px 24px;
+      margin-bottom: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      position: relative;
+    }
+    .property-card.eligible  { border-left: 5px solid var(--ok);   }
+    .property-card.excluded  { border-left: 5px solid var(--warn); opacity: .88; }
+
+    .badge {
+      display: inline-block;
+      font-size: .72rem;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    .badge.ok   { background: #d5f5e3; color: var(--ok); }
+    .badge.warn { background: #fdebd0; color: var(--warn); }
+    .badge.bad  { background: #fadbd8; color: var(--bad); }
+
+    .property-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 6px 20px;
+      font-size: .88rem;
+      margin-top: 12px;
+    }
+    .property-meta dt { color: var(--muted); font-weight: 600; display: inline; }
+    .property-meta dd { display: inline; margin-left: 4px; }
+    .property-meta div { display: flex; flex-wrap: wrap; gap: 2px; }
+
+    .note {
+      background: #eaf4fb;
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-size: .83rem;
+      color: #1a4a6b;
+      margin-top: 12px;
+    }
+
+    /* Market table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+      background: var(--card);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,.06);
+    }
+    th {
+      background: var(--primary);
+      color: #fff;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+    }
+    td { padding: 9px 14px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f0f8ff; }
+
+    /* Alert box */
+    .alert {
+      background: #fef9e7;
+      border: 1px solid #f7dc6f;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: .88rem;
+      margin-bottom: 20px;
+    }
+    .alert strong { color: #7d6608; }
+
+    /* Action list */
+    .action-list {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 24px;
+    }
+    .action-list ol { padding-left: 20px; }
+    .action-list li { margin-bottom: 8px; font-size: .9rem; }
+
+    /* Query log */
+    .query-log {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border-radius: 10px;
+      padding: 16px 20px;
+      font-family: 'Courier New', monospace;
+      font-size: .8rem;
+      line-height: 1.8;
+    }
+    .query-log span { color: #89b4fa; }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      font-size: .78rem;
+      color: var(--muted);
+      margin-top: 40px;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <h1>🏠 熱海物件スカウトレポート</h1>
+    <p>検索日: 2026-05-27 ／ 対象: 中古マンション（RC造・60㎡以上・2001年以降・3,500万円以下・民泊用途）</p>
+  </header>
+
+  <!-- Summary -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="num">6</div>
+      <div class="label">収集物件数</div>
+    </div>
+    <div class="summary-card">
+      <div class="num">1</div>
+      <div class="label">条件適合（RC・2001以降・60㎡・3500万以下）</div>
+    </div>
+    <div class="summary-card">
+      <div class="num">0</div>
+      <div class="label">民泊可（明記）</div>
+    </div>
+    <div class="summary-card">
+      <div class="num">280+</div>
+      <div class="label">熱海市内掲載物件数（SUUMO）</div>
+    </div>
+  </div>
+
+  <!-- Alert -->
+  <div class="alert">
+    <strong>⚠ 重要:</strong>
+    熱海市のマンション市場において2001年以降築・RC造・60㎡以上・3,500万円以下の物件は極めて少数。
+    完全適合は1件のみ確認。民泊目的購入には管理規約の原文確認と管理組合への事前照会が必須。
+  </div>
+
+  <!-- 条件適合物件 -->
+  <h2>✅ 条件適合物件</h2>
+
+  <div class="property-card eligible">
+    <h3>
+      ルネス熱海ブルーシア
+      <span class="badge ok">RC造</span>
+      <span class="badge ok">2007年築</span>
+      <span class="badge warn">民泊要確認</span>
+    </h3>
+    <dl class="property-meta">
+      <div><dt>価格:</dt><dd>2,845万〜5,074万円（参考相場・2025年6月時点）</dd></div>
+      <div><dt>所在地:</dt><dd>静岡県熱海市伊豆山（第三希望エリア）</dd></div>
+      <div><dt>専有面積:</dt><dd>62㎡〜97㎡（2LDK）</dd></div>
+      <div><dt>築年:</dt><dd>2007年8月（築約19年）</dd></div>
+      <div><dt>構造:</dt><dd>RC造</dd></div>
+      <div><dt>総戸数:</dt><dd>139戸 / 11階建</dd></div>
+      <div><dt>管理会社:</dt><dd>東急コミュニティー</dd></div>
+      <div><dt>最寄り駅:</dt><dd>熱海駅 徒歩47分（バス利用推奨）</dd></div>
+      <div><dt>民泊可否:</dt><dd>要確認</dd></div>
+      <div><dt>URL:</dt><dd>
+        <a href="https://mansion-market.com/mansions/detail/79632" target="_blank">マンションマーケット</a> /
+        <a href="https://suumo.jp/library/tf_22/sc_22205/to_1001695464/?bs=011" target="_blank">SUUMO</a>
+      </dd></div>
+    </dl>
+    <div class="note">
+      平和奥田・ナカノフドー建設施工。相模湾・初島・大島望む高台立地。相場単価45〜52万円/㎡。
+      3,500万円以下の住戸が相場内に存在する可能性あり。エミットシステム・3重オートロック・耐震ドア完備。
+      熱海駅からは距離があるためバス利用前提。
+    </div>
+  </div>
+
+  <!-- 除外物件 -->
+  <h2>⚠ 除外物件（条件外・参考情報）</h2>
+
+  <!-- A -->
+  <div class="property-card excluded">
+    <h3>
+      A. レーベンリゾシア熱海シーサイドタワー
+      <span class="badge bad">価格超過</span>
+      <span class="badge ok">銀座町（第一希望）</span>
+    </h3>
+    <dl class="property-meta">
+      <div><dt>価格:</dt><dd>6,800万〜7,140万円（2026年4月時点）</dd></div>
+      <div><dt>所在地:</dt><dd>静岡県熱海市銀座町13-18</dd></div>
+      <div><dt>専有面積:</dt><dd>72㎡〜95㎡</dd></div>
+      <div><dt>築年:</dt><dd>2011年10月（築約15年）</dd></div>
+      <div><dt>構造:</dt><dd>RC一部SRC造</dd></div>
+      <div><dt>総戸数:</dt><dd>120戸 / 地下1階付19階建</dd></div>
+      <div><dt>民泊可否:</dt><dd>要確認</dd></div>
+      <div><dt>URL:</dt><dd><a href="https://mansion-market.com/mansions/detail/79664" target="_blank">マンションマーケット</a></dd></div>
+    </dl>
+    <div class="note">
+      銀座町・サンビーチ徒歩圏の最好立地。温泉大浴場・露天風呂・プライベートスパ付き。
+      エリア・築年・構造・面積いずれも条件に適合するが、価格が予算を約2倍超過。価格下落があれば要注目。
+    </div>
+  </div>
+
+  <!-- B -->
+  <div class="property-card excluded">
+    <h3>
+      B. ザ・クレストタワー熱海
+      <span class="badge bad">価格超過</span>
+      <span class="badge ok">熱海駅2分（第二希望）</span>
+    </h3>
+    <dl class="property-meta">
+      <div><dt>価格:</dt><dd>8,490万〜3億4,000万円</dd></div>
+      <div><dt>所在地:</dt><dd>静岡県熱海市春日町（熱海駅 徒歩2分）</dd></div>
+      <div><dt>専有面積:</dt><dd>63.49㎡〜77.03㎡</dd></div>
+      <div><dt>築年:</dt><dd>2017年1月（築約9年）</dd></div>
+      <div><dt>構造:</dt><dd>RC一部S造</dd></div>
+      <div><dt>総戸数:</dt><dd>321戸 / 30階建</dd></div>
+      <div><dt>民泊可否:</dt><dd>要確認</dd></div>
+      <div><dt>URL:</dt><dd><a href="https://suumo.jp/library/tf_22/sc_22205/to_1000007821/" target="_blank">SUUMO</a></dd></div>
+    </dl>
+    <div class="note">
+      熱海駅至近のタワーマンション。新築価格が高く中古でも値崩れなし。予算の2〜10倍程度のため条件外。
+    </div>
+  </div>
+
+  <!-- C -->
+  <div class="property-card excluded">
+    <h3>
+      C. 熱海プラザ
+      <span class="badge bad">築年超過（1976年）</span>
+      <span class="badge warn">SRC造</span>
+    </h3>
+    <dl class="property-meta">
+      <div><dt>価格:</dt><dd>過去880万〜4,200万円（現在要確認）</dd></div>
+      <div><dt>所在地:</dt><dd>静岡県熱海市春日町（熱海駅 徒歩6分）</dd></div>
+      <div><dt>専有面積:</dt><dd>66㎡〜140㎡</dd></div>
+      <div><dt>築年:</dt><dd>1976年2月（築50年・条件外）</dd></div>
+      <div><dt>構造:</dt><dd>SRC造</dd></div>
+      <div><dt>総戸数:</dt><dd>288戸 / 14階建</dd></div>
+      <div><dt>民泊可否:</dt><dd>要確認</dd></div>
+      <div><dt>URL:</dt><dd><a href="https://mansion-market.com/mansions/detail/79684" target="_blank">マンションマーケット</a></dd></div>
+    </dl>
+    <div class="note">
+      3,000坪以上の大規模敷地。源泉掛け流し温泉付き。価格・面積・立地は魅力的だが築50年。
+      民泊営業に必要な消防設備改修コストが課題となる可能性大。
+    </div>
+  </div>
+
+  <!-- D -->
+  <div class="property-card excluded">
+    <h3>
+      D. ドメーヌ熱海伊豆山
+      <span class="badge bad">築年超過（1993年）</span>
+      <span class="badge ok">RC造</span>
+    </h3>
+    <dl class="property-meta">
+      <div><dt>価格:</dt><dd>2,950万円〜（現在要確認）</dd></div>
+      <div><dt>所在地:</dt><dd>静岡県熱海市伊豆山</dd></div>
+      <div><dt>専有面積:</dt><dd>92.06㎡〜119.04㎡</dd></div>
+      <div><dt>築年:</dt><dd>1993年3月（築33年・条件外）</dd></div>
+      <div><dt>構造:</dt><dd>RC造</dd></div>
+      <div><dt>民泊可否:</dt><dd>要確認</dd></div>
+      <div><dt>URL:</dt><dd><a href="https://www.angel-f.com/atami/mansion/5311.html" target="_blank">エンゼル不動産</a></dd></div>
+    </dl>
+    <div class="note">
+      大成建設分譲の高台リゾートMS。斜行エレベーター採用。価格・面積・構造は魅力的だが1993年築で条件外。
+      耐震補強状況を確認できれば、条件緩和の余地あり。
+    </div>
+  </div>
+
+  <!-- E -->
+  <div class="property-card excluded">
+    <h3>
+      E. ライオンズマンション熱海
+      <span class="badge bad">築年超過（1991年）</span>
+    </h3>
+    <dl class="property-meta">
+      <div><dt>価格:</dt><dd>要確認（中古5件売り出し中）</dd></div>
+      <div><dt>所在地:</dt><dd>静岡県熱海市海光町（熱海駅 徒歩約10分）</dd></div>
+      <div><dt>築年:</dt><dd>1991年12月（築34年・条件外）</dd></div>
+      <div><dt>構造:</dt><dd>RC造（推定）</dd></div>
+      <div><dt>民泊可否:</dt><dd>要確認</dd></div>
+      <div><dt>URL:</dt><dd><a href="https://www.mansion-review.jp/mansion/576403.html" target="_blank">マンションレビュー</a></dd></div>
+    </dl>
+    <div class="note">
+      温泉大浴場・サウナ付き。熱海駅徒歩圏で立地は良好。築年数が条件外だが、耐震診断済みであれば検討余地あり。
+    </div>
+  </div>
+
+  <!-- 市場動向 -->
+  <h2>📊 市場動向（2026年5月）</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>マンション名</th>
+        <th>竣工年</th>
+        <th>構造</th>
+        <th>所在地</th>
+        <th>価格相場</th>
+        <th>条件適合</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>ルネス熱海ブルーシア</td>
+        <td>2007年8月</td>
+        <td>RC</td>
+        <td>伊豆山</td>
+        <td>2,845万〜5,074万円</td>
+        <td style="color:var(--ok);font-weight:700">△ 価格域に候補あり</td>
+      </tr>
+      <tr>
+        <td>レーベンリゾシア熱海シーサイドタワー</td>
+        <td>2011年10月</td>
+        <td>RC一部SRC</td>
+        <td>銀座町</td>
+        <td>6,800万〜7,140万円</td>
+        <td style="color:var(--bad);font-weight:700">✗ 価格超過</td>
+      </tr>
+      <tr>
+        <td>ザ・クレストタワー熱海</td>
+        <td>2017年1月</td>
+        <td>RC一部S</td>
+        <td>春日町</td>
+        <td>8,490万〜3億4,000万円</td>
+        <td style="color:var(--bad);font-weight:700">✗ 価格超過</td>
+      </tr>
+      <tr>
+        <td>ドメーヌ熱海伊豆山</td>
+        <td>1993年3月</td>
+        <td>RC</td>
+        <td>伊豆山</td>
+        <td>2,950万円〜</td>
+        <td style="color:var(--warn);font-weight:700">△ 築年超過</td>
+      </tr>
+      <tr>
+        <td>熱海プラザ</td>
+        <td>1976年2月</td>
+        <td>SRC</td>
+        <td>春日町</td>
+        <td>880万〜4,200万円（過去）</td>
+        <td style="color:var(--bad);font-weight:700">✗ 築年・構造外</td>
+      </tr>
+      <tr>
+        <td>ライオンズマンション熱海</td>
+        <td>1991年12月</td>
+        <td>RC（推定）</td>
+        <td>海光町</td>
+        <td>要確認</td>
+        <td style="color:var(--bad);font-weight:700">✗ 築年超過</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:20px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px 22px; font-size:.9rem;">
+    <h3 style="margin-bottom:10px;">市場サマリー</h3>
+    <ul style="padding-left:18px; line-height:2;">
+      <li>熱海市中古マンション掲載件数: 280件以上（SUUMO 2026年4月〜5月）</li>
+      <li>市場平均坪単価: 105.6万円/坪（32.0万円/㎡）</li>
+      <li>直近3年間の価格推移: 約▲4.12%（下落傾向）</li>
+      <li>2LDK平均価格: 約2,179万円 ／ 3LDK平均: 約2,595万円</li>
+      <li><strong>2001年以降築・RC造・60㎡以上・3,500万以下は市場に極めて少ない</strong></li>
+      <li>熱海市では民泊規制強化中（2026年: 無届け民泊の排除取り組みが強まっている）</li>
+      <li>マンション管理規約で民泊禁止のケースが非常に多く、事前確認が最重要</li>
+    </ul>
+  </div>
+
+  <!-- 次回アクション -->
+  <h2>🗂 次回アクション</h2>
+  <div class="action-list">
+    <ol>
+      <li><strong>ルネス熱海ブルーシア</strong>の管理規約・民泊可否を管理組合（東急コミュニティー）に直接問い合わせ</li>
+      <li>エンゼル不動産・ワンストップ株式会社・イーズ（熱海駅前）に2001年以降築RC造60㎡以上3,500万以下の物件を問い合わせ</li>
+      <li>熱海市の用途地域マップで銀座町・サンビーチ周辺の民泊可能ゾーンを確認</li>
+      <li>来週再検索: 新規売り出し物件の確認（毎週水曜更新が多い）</li>
+    </ol>
+  </div>
+
+  <!-- 検索クエリログ -->
+  <h2>🔍 検索クエリログ</h2>
+  <div class="query-log">
+    <span>[2026-05-27]</span> 熱海 中古マンション 3500万円以下 60平米以上 RC造 2026年<br>
+    <span>[2026-05-27]</span> 熱海銀座 サンビーチ 中古マンション 売買 RC造<br>
+    <span>[2026-05-27]</span> 熱海 中古マンション 築25年以内 民泊可 簡易宿所<br>
+    <span>[2026-05-27]</span> 熱海駅 伊豆山 中古マンション RC造 売買 60㎡以上 2026<br>
+    <span>[2026-05-27]</span> site:suumo.jp 熱海 中古マンション RC造 3500万円以下<br>
+    <span>[2026-05-27]</span> 熱海 リゾートマンション 中古 RC 民泊 簡易宿所 売り出し 2026<br>
+    <span>[2026-05-27]</span> 熱海市銀座町 マンション 2011年築 20階建て 120戸 RC造<br>
+    <span>[2026-05-27]</span> 熱海 伊豆山 マンション 2007年築 139戸 11階 RC造<br>
+    <span>[2026-05-27]</span> ルネス熱海ブルーシア 売買 価格 専有面積 RC造 構造 民泊<br>
+    <span>[2026-05-27]</span> ザ・クレストタワー熱海 築年 RC造 専有面積 価格 民泊<br>
+    <span>[2026-05-27]</span> 熱海 民泊可能マンション 管理規約 簡易宿所 RC造 中古 2026年<br>
+    <span>[2026-05-27]</span> 熱海市渚町 渚マンション 中古 RC造 2001年以降 売り出し 価格 専有面積
+  </div>
+
+  <footer>
+    <p>熱海物件スカウトレポート 2026-05-27 ／ 生成: atami-scout-bot ／ データソース: SUUMO, HOME'S, アットホーム, マンションマーケット, エンゼル不動産, マンションレビュー 他</p>
+  </footer>
+
+</div>
+</body>
+</html>
